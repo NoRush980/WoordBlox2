@@ -180,6 +180,7 @@ export default function TryPage() {
         fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
         padding: 24,
         background: "linear-gradient(180deg,#f4f7ff 0%, #e9f3ff 100%)",
+        color: "#0f172a",                 // ← nieuw
       }}
     >
       <div
@@ -249,6 +250,7 @@ export default function TryPage() {
                 padding: 16,
                 marginBottom: 12,
                 fontSize: 18,
+                color: "#0f172a",                 // ← nieuw
               }}
             >
               {curr.question}
