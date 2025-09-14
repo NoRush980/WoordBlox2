@@ -4,7 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 type Vec = { x: number; y: number };
-type Ball = { pos: Vec; vel: Vec; r: number; bounciness: number };
+type Ball = {
+  pos: Vec;
+  vel: Vec;
+  r: number;
+  bounciness: number;
+  hue: number;        // kleurtoon 0–360 (neon)
+  trail: Vec[];       // voor motion trail
+};
+
 
 export default function GamePage() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -102,13 +110,18 @@ export default function GamePage() {
     const w = widthRef.current;
     const r = rand(14, 24);
     const baseSpeed = 6 + speedBoost;
+    const hue = rand(170, 260); // blauw→paars neonrange; pas aan naar smaak
+  
     ballsRef.current.push({
       pos: { x: w + r + rand(0, 120), y: groundYRef.current - r },
       vel: { x: -(baseSpeed + Math.random() * 2), y: -rand(2, 6) },
       r,
       bounciness: 0.55 + Math.random() * 0.2,
+      hue,
+      trail: [],
     });
   }
+
 
   function resetWorld() {
     const p = playerRef.current;
@@ -147,20 +160,27 @@ export default function GamePage() {
     }
 
     // physics ballen
-    for (const b of ballsRef.current) {
-      b.pos.x += b.vel.x;
-      b.pos.y += b.vel.y;
-      b.vel.y += gravityRef.current * 0.6;
+for (const b of ballsRef.current) {
+  // trail (pos vóór update)
+  b.trail.push({ x: b.pos.x, y: b.pos.y });
+  if (b.trail.length > 8) b.trail.shift(); // max 8 sporen
 
-      const by = groundYRef.current - b.r;
-      if (b.pos.y >= by) {
-        b.pos.y = by;
-        b.vel.y = -Math.abs(b.vel.y) * b.bounciness;
-      }
-      if (b.pos.x < -b.r - 40) {
-        b.pos.x = widthRef.current + b.r + rand(0, 140);
-      }
-    }
+  // physics
+  b.pos.x += b.vel.x;
+  b.pos.y += b.vel.y;
+  b.vel.y += gravityRef.current * 0.6;
+
+  const by = groundYRef.current - b.r;
+  if (b.pos.y >= by) {
+    b.pos.y = by;
+    b.vel.y = -Math.abs(b.vel.y) * b.bounciness;
+  }
+  if (b.pos.x < -b.r - 40) {
+    b.pos.x = widthRef.current + b.r + rand(0, 140);
+    b.trail = []; // trail reset zodra hij rechts opnieuw binnenkomt
+  }
+}
+
 
     // botsing?
     for (const b of ballsRef.current) {
@@ -225,15 +245,43 @@ if (img) {
 }
 
     // ballen
-    ctx.fillStyle = "#60a5fa";
-    ctx.strokeStyle = "#93c5fd";
-    ctx.lineWidth = 2;
-    for (const b of ballsRef.current) {
-      ctx.beginPath();
-      ctx.arc(b.pos.x, b.pos.y, b.r, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-    }
+// ballen — neon orbs met trail & highlight
+for (const b of ballsRef.current) {
+  // trail (kleine vervagende cirkels)
+  for (let i = 0; i < b.trail.length; i++) {
+    const t = b.trail[i];
+    const alpha = (i + 1) / (b.trail.length + 1); // zwakker naar achter
+    ctx.fillStyle = `hsla(${b.hue}, 90%, 60%, ${0.08 * alpha})`;
+    ctx.beginPath();
+    ctx.arc(t.x, t.y, b.r * 0.9, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // glow-body (radiale gradient met lichtpuntje linksboven)
+  const grad = ctx.createRadialGradient(
+    b.pos.x - b.r * 0.35, b.pos.y - b.r * 0.35, b.r * 0.2,
+    b.pos.x, b.pos.y, b.r
+  );
+  grad.addColorStop(0, `hsl(${b.hue}, 95%, 75%)`);
+  grad.addColorStop(0.7, `hsl(${b.hue}, 85%, 55%)`);
+  grad.addColorStop(1, `hsl(${b.hue}, 85%, 45%)`);
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(b.pos.x, b.pos.y, b.r, 0, Math.PI * 2);
+  ctx.fill();
+
+  // rand/glans
+  ctx.strokeStyle = `hsla(${b.hue}, 90%, 80%, .6)`;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // specular highlight
+  ctx.fillStyle = "rgba(255,255,255,.25)";
+  ctx.beginPath();
+  ctx.ellipse(b.pos.x - b.r * 0.35, b.pos.y - b.r * 0.35, b.r * 0.35, b.r * 0.22, -0.6, 0, Math.PI * 2);
+  ctx.fill();
+}
+
 
     // score
     ctx.fillStyle = "white";
