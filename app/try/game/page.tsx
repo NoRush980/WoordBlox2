@@ -10,6 +10,18 @@ export default function GamePage() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const rafRef = useRef<number | null>(null);
 
+// ... jouw bestaande refs/state ...
+
+  // ✅ SPRITES — DEZE HIERBINNEN PLAATSEN
+  const idleImgRef = useRef<HTMLImageElement | null>(null);
+  const jumpImgRef = useRef<HTMLImageElement | null>(null);
+  const spritesLoadedRef = useRef(false);
+
+  // weergavegrootte van de sprite (pas gerust aan)
+  const SPRITE_W = 90;
+  const SPRITE_H = 96;
+
+
   // UI-states (alleen voor knoppen/labels buiten canvas)
   const [running, setRunning] = useState(false);
   const [gameOver, setGameOver] = useState(false);
@@ -183,9 +195,34 @@ export default function GamePage() {
     ctx.fillRect(0, gY, w, 30);
 
     // speler
-    ctx.fillStyle = "#22c55e";
-    const p = playerRef.current;
-    ctx.fillRect(p.pos.x - p.w / 2, p.pos.y - p.h, p.w, p.h);
+// speler (sprite i.p.v. blokje)
+const p = playerRef.current;
+const img = spritesLoadedRef.current
+  ? (p.onGround ? idleImgRef.current : jumpImgRef.current)
+  : null;
+
+if (img) {
+  // optioneel: klein beetje tilt tijdens sprong voor dynamiek
+  const inAir = !p.onGround;
+  const tilt = inAir ? -0.12 : 0; // ~ -7 graden
+
+  // schaduw
+  ctx.fillStyle = "rgba(0,0,0,0.16)";
+  ctx.beginPath();
+  ctx.ellipse(p.pos.x, groundYRef.current + 32, inAir ? 18 : 22, inAir ? 5 : 6, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // sprite tekenen gecentreerd op x, en met onderkant op p.pos.y
+  ctx.save();
+  ctx.translate(p.pos.x, p.pos.y);
+  ctx.rotate(tilt);
+  ctx.drawImage(img as HTMLImageElement, -SPRITE_W / 2, -SPRITE_H, SPRITE_W, SPRITE_H);
+  ctx.restore();
+} else {
+  // fallback zolang sprites nog laden
+  ctx.fillStyle = "#22c55e";
+  ctx.fillRect(p.pos.x - p.w / 2, p.pos.y - p.h, p.w, p.h);
+}
 
     // ballen
     ctx.fillStyle = "#60a5fa";
@@ -227,6 +264,16 @@ export default function GamePage() {
     if (!cvs || !ctx) return;
 
     // eerste teken + AUTO-START
+    // sprites preloaden
+idleImgRef.current = new Image();
+jumpImgRef.current = new Image();
+let loaded = 0;
+const onLoad = () => { loaded++; if (loaded === 2) spritesLoadedRef.current = true; };
+idleImgRef.current.onload = onLoad;
+jumpImgRef.current.onload = onLoad;
+idleImgRef.current.src = "/Player_stand.png"; // staat in /public
+jumpImgRef.current.src = "/Player_jump.png";  // staat in /public
+    
     draw(ctx, 0);
     start();
 
