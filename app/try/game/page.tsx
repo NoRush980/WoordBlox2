@@ -261,6 +261,7 @@ export default function GamePage() {
         fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
         padding: 24,
         background: "linear-gradient(180deg,#f4f7ff 0%, #e9f3ff 100%)",
+        color: "#0f172a",              // ← deze regel toevoegen
       }}
     >
       <div style={{ textAlign: "center" }}>
@@ -292,7 +293,7 @@ export default function GamePage() {
       touchAction: "none", // voorkomt zoomen/scroll bij tikken
     }}
   />
-  
+
 </div>
 
         {/* knoppen */}
