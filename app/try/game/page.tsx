@@ -269,19 +269,31 @@ export default function GamePage() {
           <b>Spatie</b> = springen • <b>Enter</b> = start/herstart • op mobiel: SPRING-knop.
         </p>
 
-        <div
-          style={{
-            position: "relative",
-            margin: "0 auto 12px",
-            borderRadius: 16,
-            overflow: "hidden",
-            boxShadow: "0 10px 30px rgba(0,0,0,.10)",
-            width: widthRef.current,
-            maxWidth: "100%",
-          }}
-        >
-          <canvas ref={canvasRef} width={widthRef.current} height={heightRef.current} />
-        </div>
+{/* RESPONSIVE WRAPPER + CANVAS */}
+<div
+  style={{
+    position: "relative",
+    margin: "0 auto 12px",
+    borderRadius: 16,
+    overflow: "hidden",
+    boxShadow: "0 10px 30px rgba(0,0,0,.10)",
+    width: "100%",   // past mee met scherm
+    maxWidth: 900,   // desktop max
+  }}
+>
+  <canvas
+    ref={canvasRef}
+    width={900}      // logische resolutie blijft 900x420
+    height={420}
+    style={{
+      width: "100%",   // schaalt in breedte
+      height: "auto",  // houdt verhouding
+      display: "block",
+      touchAction: "none", // voorkomt zoomen/scroll bij tikken
+    }}
+  />
+  
+</div>
 
         {/* knoppen */}
         {!running && (
